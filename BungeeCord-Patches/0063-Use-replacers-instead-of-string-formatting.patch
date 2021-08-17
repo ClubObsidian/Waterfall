@@ -1,0 +1,37 @@
+From a4624946de523ee8850f7752d76024e12337dcda Mon Sep 17 00:00:00 2001
+From: virustotalop <virustotalop@gmail.com>
+Date: Mon, 16 Aug 2021 21:07:14 -0700
+Subject: [PATCH] Use replacers instead of string formatting
+
+
+diff --git a/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java b/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java
+index 03946262..fdeebf00 100644
+--- a/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java
++++ b/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java
+@@ -70,7 +70,7 @@ public abstract class Configuration implements ProxyConfig
+     private int compressionThreshold = 256;
+     private boolean preventProxyConnections;
+     private boolean forgeSupport = true; // Waterfall: default to enabled
+-    private String authUrl = "https://sessionserver.mojang.com/session/minecraft/hasJoined?username=%s&serverId=%s%s";
++    private String authUrl = "https://sessionserver.mojang.com/session/minecraft/hasJoined?username=%name%&serverId=%hash%%preventproxy%";
+ 
+     @Synchronized("serversLock") // Waterfall
+     public void load()
+diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
+index 2a27294c..344e0da9 100644
+--- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
++++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
+@@ -448,7 +448,9 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+         String encodedHash = URLEncoder.encode( new BigInteger( sha.digest() ).toString( 16 ), "UTF-8" );
+ 
+         String preventProxy = ( BungeeCord.getInstance().config.isPreventProxyConnections() && getSocketAddress() instanceof InetSocketAddress ) ? "&ip=" + URLEncoder.encode( getAddress().getAddress().getHostAddress(), "UTF-8" ) : "";
+-        String authURL = String.format( MOJANG_AUTH_URL, encName, encodedHash, preventProxy );
++        String authURL = MOJANG_AUTH_URL.replace( "%name%", encName )
++        .replace( "%hash%", encodedHash )
++        .replace( "%preventproxy%", preventProxy );
+ 
+         Callback<String> handler = new Callback<String>()
+         {
+-- 
+2.30.2.windows.1
+
